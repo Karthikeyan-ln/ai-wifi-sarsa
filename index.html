@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Wi-Fi Recommendation</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="container">
+    <header>
+        <div class="eyebrow">SARSA REINFORCEMENT LEARNING</div>
+        <h1>AI-Based Best Wi-Fi Network Recommendation</h1>
+    </header>
+
+    <button id="scanBtn" onclick="scanWifi()">🔍 Scan Wi-Fi</button>
+    <div id="status" class="status">Ready to scan.</div>
+
+    <section id="recommendation" class="hero hidden">
+        <div>
+            <div class="label">⭐ Recommended Wi-Fi Network</div>
+            <h2 id="recommendedName">—</h2>
+            <p id="recommendedMeta">—</p>
+        </div>
+        <div class="scoreBox">
+            <span>Quality</span>
+            <strong id="recommendedQuality">—</strong>
+        </div>
+    </section>
+
+    <section class="cards">
+        <div class="card"><span>Network State</span><strong id="state">—</strong></div>
+        <div class="card"><span>Networks Detected</span><strong id="count">—</strong></div>
+        <div class="card"><span>Recommended Quality</span><strong id="quality">—</strong></div>
+        <div class="card"><span>SARSA Memory</span><strong id="memory">—</strong></div>
+    </section>
+
+    <section class="panel">
+        <h2>Network Analysis</h2>
+        <p class="muted">
+            This is not a direct internet-speed test.
+        </p>
+
+        <div class="tableWrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Wi-Fi Network</th>
+                        <th>Signal</th>
+                        <th>Channel</th>
+                        <th>Channel Load</th>
+                        <th>Estimated Quality</th>
+                        <th>SARSA Q-Value</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="networkTable"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Nearby Wi-Fi Networks</h2>
+        <div id="networkCards" class="networkGrid"></div>
+    </section>
+</main>
+
+<script>
+function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+    }[c]));
+}
+
+async function scanWifi() {
+    const button = document.getElementById("scanBtn");
+    const status = document.getElementById("status");
+
+    button.disabled = true;
+    button.textContent = "⏳ Scanning...";
+    status.textContent = "Scanning nearby Wi-Fi networks...";
+
+    try {
+        const response = await fetch("/api/scan");
+        const data = await response.json();
+
+        if (!data.success) throw new Error("Scan failed");
+
+        status.textContent = `Scan completed — ${data.network_count} networks detected`;
+
+        const rec = data.recommended_network;
+        document.getElementById("recommendation").classList.remove("hidden");
+
+        if (rec) {
+            document.getElementById("recommendedName").textContent = rec.ssid;
+            document.getElementById("recommendedMeta").textContent =
+                `Signal ${rec.signal}% • Channel ${rec.channel} • Estimated quality ${rec.quality}%`;
+            document.getElementById("recommendedQuality").textContent = `${rec.quality}%`;
+            document.getElementById("quality").textContent = `${rec.quality}%`;
+        } else {
+            document.getElementById("recommendedName").textContent = "No Wi-Fi found";
+            document.getElementById("recommendedMeta").textContent = "Try scanning again.";
+            document.getElementById("recommendedQuality").textContent = "—";
+            document.getElementById("quality").textContent = "—";
+        }
+
+        document.getElementById("state").textContent = data.state;
+        document.getElementById("count").textContent = data.network_count;
+        document.getElementById("memory").textContent = data.learning.memory_entries;
+
+        document.getElementById("networkTable").innerHTML =
+            data.networks.map((n, i) => `
+                <tr class="${rec && n.ssid === rec.ssid ? "recommendedRow" : ""}">
+                    <td>${i + 1}</td>
+                    <td><strong>${esc(n.ssid)}</strong></td>
+                    <td>${n.signal}%</td>
+                    <td>${n.channel}</td>
+                    <td>${n.channel_load}%</td>
+                    <td>${n.quality}%</td>
+                    <td>${n.q_value}</td>
+                    <td><strong>${n.recommendation_score}</strong></td>
+                </tr>
+            `).join("");
+
+        document.getElementById("networkCards").innerHTML =
+            data.networks.map(n => `
+                <div class="networkCard">
+                    <h3>${esc(n.ssid)}</h3>
+                    <div class="meter"><span style="width:${n.signal}%"></span></div>
+                    <p>Signal: <b>${n.signal}%</b></p>
+                    <p>Channel: <b>${n.channel}</b></p>
+                    <p>Quality: <b>${n.quality}%</b></p>
+                </div>
+            `).join("");
+
+    } catch (error) {
+        status.textContent = "Scan failed. Make sure Wi-Fi is enabled and Flask is running.";
+        console.error(error);
+    } finally {
+        button.disabled = false;
+        button.textContent = "🔍 Scan Wi-Fi";
+    }
+}
+</script>
+</body>
+</html>
