@@ -1,6 +1,8 @@
-from flask import Flask, render_template, jsonify
+import os
+import threading
+from flask import Flask, render_template, jsonify, request
 
-from wifi_scanner import scan_wifi, get_channel_statistics
+from wifi_scanner import get_channel_statistics
 from wifi_environment import WiFiEnvironment
 from sarsa import SARSAAgent
 
@@ -9,9 +11,17 @@ app = Flask(__name__)
 env = WiFiEnvironment()
 agent = SARSAAgent()
 
-# SARSA memory across scans.
+# SARSA memory across submitted scans.
 previous_state = None
 previous_action = None
+
+# Latest real scan received from a local Windows scanner.
+latest_result = None
+data_lock = threading.Lock()
+
+# Optional shared secret. Set SCANNER_API_KEY on Render and in local_scanner.py
+# for a protected upload endpoint. If empty, uploads are accepted without a key.
+SCANNER_API_KEY = os.environ.get("SCANNER_API_KEY", "").strip()
 
 
 def group_networks(networks):
@@ -27,16 +37,10 @@ def group_networks(networks):
     return list(grouped.values())
 
 
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-@app.route("/api/scan")
-def scan():
+def process_scan(raw_networks):
+    """Turn submitted real Wi-Fi measurements into a SARSA recommendation."""
     global previous_state, previous_action
 
-    raw_networks = scan_wifi()
     networks = group_networks(raw_networks)
     statistics = get_channel_statistics(raw_networks)
 
@@ -46,13 +50,14 @@ def scan():
     for network in networks:
         ssid = network["ssid"]
         quality = env.network_quality(network, statistics)
-        key = ssid
-        candidates.append(key)
+        candidates.append(ssid)
 
         item = dict(network)
         item["quality"] = quality
         item["channel_load"] = round(
-            env.calculate_channel_load(statistics, network.get("channel", 0)) * 100,
+            env.calculate_channel_load(
+                statistics, network.get("channel", 0)
+            ) * 100,
             2,
         )
         enriched.append(item)
@@ -60,8 +65,8 @@ def scan():
     qualities = [n["quality"] for n in enriched]
     state = env.overall_state(qualities)
 
-    # SARSA transition: reward the previously selected network using the
-    # quality measured in this scan, then bootstrap from the next action.
+    # SARSA transition: reward the previously selected network using
+    # its newly measured quality, then bootstrap from the next action.
     if previous_action is not None and previous_state is not None:
         if previous_action in candidates:
             next_action = agent.choose_action(state, candidates, explore=True)
@@ -80,9 +85,7 @@ def scan():
     else:
         next_action = agent.choose_action(state, candidates, explore=True)
 
-    # Recommendation is based primarily on CURRENT measured quality.
-    # Q-value is a learning signal, not permission for stale data to override
-    # a clearly better current network.
+    # Current measured quality remains dominant.
     for item in enriched:
         q = agent.get_q(state, item["ssid"])
         item["q_value"] = round(q, 2)
@@ -103,7 +106,7 @@ def scan():
 
     agent.save()
 
-    return jsonify({
+    return {
         "success": True,
         "networks": enriched,
         "raw_network_count": len(raw_networks),
@@ -118,7 +121,68 @@ def scan():
             "epsilon": agent.epsilon,
             "memory_entries": len(agent.q_table),
         },
-    })
+    }
+
+
+def authorized_upload():
+    """Check the optional API key for local scanner uploads."""
+    if not SCANNER_API_KEY:
+        return True
+
+    supplied = request.headers.get("X-Scanner-Key", "")
+    return supplied == SCANNER_API_KEY
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/api/scan", methods=["GET", "POST"])
+def scan():
+    """
+    POST: receive a real scan from local_scanner.py.
+    GET: return the most recently received scan.
+    """
+    global latest_result
+
+    if request.method == "POST":
+        if not authorized_upload():
+            return jsonify({
+                "success": False,
+                "error": "Invalid scanner API key."
+            }), 401
+
+        payload = request.get_json(silent=True) or {}
+        raw_networks = payload.get("networks")
+
+        if not isinstance(raw_networks, list):
+            return jsonify({
+                "success": False,
+                "error": "JSON must contain a 'networks' list."
+            }), 400
+
+        result = process_scan(raw_networks)
+        with data_lock:
+            latest_result = result
+
+        return jsonify(result)
+
+    with data_lock:
+        if latest_result is None:
+            return jsonify({
+                "success": False,
+                "available": False,
+                "error": (
+                    "No local Wi-Fi scan has been uploaded yet. "
+                    "Run local_scanner.py on the Windows computer first."
+                ),
+            })
+
+        return jsonify({
+            **latest_result,
+            "available": True,
+        })
 
 
 @app.route("/api/qtable")
