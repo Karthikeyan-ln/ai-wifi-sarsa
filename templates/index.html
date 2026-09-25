@@ -1,147 +1,879 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Wi-Fi Recommendation</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        AI-Based Best Wi-Fi Network Recommendation
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
 </head>
+
 <body>
-<main class="container">
-    <header>
-        <div class="eyebrow">SARSA REINFORCEMENT LEARNING</div>
-        <h1>AI-Based Best Wi-Fi Network Recommendation</h1>
-    </header>
 
-    <button id="scanBtn" onclick="scanWifi()">🔍 Scan Wi-Fi</button>
-    <div id="status" class="status">Ready to scan.</div>
+<div class="container">
 
-    <section id="recommendation" class="hero hidden">
-        <div>
-            <div class="label">⭐ Recommended Wi-Fi Network</div>
-            <h2 id="recommendedName">—</h2>
-            <p id="recommendedMeta">—</p>
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
+
+    <header class="header">
+
+        <div class="badge">
+            SARSA REINFORCEMENT LEARNING
         </div>
-        <div class="scoreBox">
-            <span>Quality</span>
-            <strong id="recommendedQuality">—</strong>
-        </div>
-    </section>
 
-    <section class="cards">
-        <div class="card"><span>Network State</span><strong id="state">—</strong></div>
-        <div class="card"><span>Networks Detected</span><strong id="count">—</strong></div>
-        <div class="card"><span>Recommended Quality</span><strong id="quality">—</strong></div>
-        <div class="card"><span>SARSA Memory</span><strong id="memory">—</strong></div>
-    </section>
+        <h1>
+            AI-Based Best Wi-Fi Network Recommendation
+        </h1>
 
-    <section class="panel">
-        <h2>Network Analysis</h2>
-        <p class="muted">
-            This is not a direct internet-speed test.
+        <p class="subtitle">
+            Using SARSA Reinforcement Learning
         </p>
 
-        <div class="tableWrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Wi-Fi Network</th>
-                        <th>Signal</th>
-                        <th>Channel</th>
-                        <th>Channel Load</th>
-                        <th>Estimated Quality</th>
-                        <th>SARSA Q-Value</th>
-                        <th>Score</th>
-                    </tr>
-                </thead>
-                <tbody id="networkTable"></tbody>
-            </table>
+        <button
+            id="scanButton"
+            class="scan-button"
+            onclick="scanWiFi()"
+        >
+            🔍 Scan Wi-Fi
+        </button>
+
+        <div
+            id="status"
+            class="status"
+        >
+            Waiting for local Wi-Fi scanner...
         </div>
+
+    </header>
+
+
+    <!-- ================================================= -->
+    <!-- RECOMMENDED NETWORK -->
+    <!-- ================================================= -->
+
+    <section
+        id="recommendationSection"
+        class="recommendation-card"
+    >
+
+        <div class="section-label">
+            Recommended Wi-Fi Network
+        </div>
+
+        <h2 id="recommendedSSID">
+            —
+        </h2>
+
+        <p id="recommendedDetails">
+            Start the local scanner to detect nearby Wi-Fi networks.
+        </p>
+
+        <div class="quality-display">
+
+            <span>
+                Quality
+            </span>
+
+            <strong id="recommendedQuality">
+                —
+            </strong>
+
+        </div>
+
     </section>
+
+
+    <!-- ================================================= -->
+    <!-- SUMMARY CARDS -->
+    <!-- ================================================= -->
+
+    <section class="summary-grid">
+
+        <div class="summary-card">
+
+            <div class="summary-title">
+                Network State
+            </div>
+
+            <div
+                id="networkState"
+                class="summary-value"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-title">
+                Networks Detected
+            </div>
+
+            <div
+                id="networkCount"
+                class="summary-value"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-title">
+                Recommended Quality
+            </div>
+
+            <div
+                id="summaryQuality"
+                class="summary-value"
+            >
+                —
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="summary-title">
+                SARSA Memory
+            </div>
+
+            <div
+                id="memoryEntries"
+                class="summary-value"
+            >
+                —
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- NETWORK ANALYSIS -->
+    <!-- ================================================= -->
 
     <section class="panel">
-        <h2>Nearby Wi-Fi Networks</h2>
-        <div id="networkCards" class="networkGrid"></div>
+
+        <div class="panel-header">
+
+            <h2>
+                Network Analysis
+            </h2>
+
+            <p>
+                This is not a direct internet-speed test.
+            </p>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Rank
+                        </th>
+
+                        <th>
+                            Wi-Fi Network
+                        </th>
+
+                        <th>
+                            Signal
+                        </th>
+
+                        <th>
+                            Channel
+                        </th>
+
+                        <th>
+                            Channel Load
+                        </th>
+
+                        <th>
+                            Estimated Quality
+                        </th>
+
+                        <th>
+                            SARSA Q-Value
+                        </th>
+
+                        <th>
+                            Score
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="networkTable">
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            class="empty-message"
+                        >
+                            No Wi-Fi scan available yet.
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
     </section>
-</main>
+
+
+    <!-- ================================================= -->
+    <!-- NEARBY NETWORKS -->
+    <!-- ================================================= -->
+
+    <section class="panel">
+
+        <div class="panel-header">
+
+            <h2>
+                Nearby Wi-Fi Networks
+            </h2>
+
+        </div>
+
+        <div
+            id="nearbyNetworks"
+            class="nearby-grid"
+        >
+
+            <div class="empty-message">
+                Waiting for Wi-Fi scan...
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- FOOTER -->
+    <!-- ================================================= -->
+
+    <footer>
+
+        <p>
+            AI-Based Wi-Fi Recommendation
+            using SARSA Reinforcement Learning
+        </p>
+
+        <p>
+            Real Wi-Fi data is collected locally on Windows
+            and processed by the public Flask server.
+        </p>
+
+    </footer>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ===================================================== -->
 
 <script>
-function esc(value) {
-    return String(value ?? "").replace(/[&<>"']/g, c => ({
-        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
-    }[c]));
-}
 
-async function scanWifi() {
-    const button = document.getElementById("scanBtn");
-    const status = document.getElementById("status");
+let lastScanTime = null;
+
+
+/* ===================================================== */
+/* GET LATEST WI-FI SCAN */
+/* ===================================================== */
+
+async function scanWiFi() {
+
+    const button =
+        document.getElementById("scanButton");
+
+    const status =
+        document.getElementById("status");
+
 
     button.disabled = true;
-    button.textContent = "⏳ Scanning...";
-    status.textContent = "Scanning nearby Wi-Fi networks...";
+
+    button.textContent = "🔄 Checking Wi-Fi...";
+
+    status.textContent =
+        "Checking for the latest Windows Wi-Fi scan...";
+
 
     try {
-        const response = await fetch("/api/scan");
-        const data = await response.json();
 
-        if (!data.success) throw new Error("Scan failed");
+        const response =
+            await fetch(
+                "/api/scan",
+                {
+                    method: "GET",
+                    cache: "no-store"
+                }
+            );
 
-        status.textContent = `Scan completed — ${data.network_count} networks detected`;
 
-        const rec = data.recommended_network;
-        document.getElementById("recommendation").classList.remove("hidden");
+        const data =
+            await response.json();
 
-        if (rec) {
-            document.getElementById("recommendedName").textContent = rec.ssid;
-            document.getElementById("recommendedMeta").textContent =
-                `Signal ${rec.signal}% • Channel ${rec.channel} • Estimated quality ${rec.quality}%`;
-            document.getElementById("recommendedQuality").textContent = `${rec.quality}%`;
-            document.getElementById("quality").textContent = `${rec.quality}%`;
-        } else {
-            document.getElementById("recommendedName").textContent = "No Wi-Fi found";
-            document.getElementById("recommendedMeta").textContent = "Try scanning again.";
-            document.getElementById("recommendedQuality").textContent = "—";
-            document.getElementById("quality").textContent = "—";
+
+        /*
+         * The Render server may not have received
+         * a scan yet.
+         */
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.error ||
+                "No Wi-Fi scan is available."
+            );
+
         }
 
-        document.getElementById("state").textContent = data.state;
-        document.getElementById("count").textContent = data.network_count;
-        document.getElementById("memory").textContent = data.learning.memory_entries;
 
-        document.getElementById("networkTable").innerHTML =
-            data.networks.map((n, i) => `
-                <tr class="${rec && n.ssid === rec.ssid ? "recommendedRow" : ""}">
-                    <td>${i + 1}</td>
-                    <td><strong>${esc(n.ssid)}</strong></td>
-                    <td>${n.signal}%</td>
-                    <td>${n.channel}</td>
-                    <td>${n.channel_load}%</td>
-                    <td>${n.quality}%</td>
-                    <td>${n.q_value}</td>
-                    <td><strong>${n.recommendation_score}</strong></td>
-                </tr>
-            `).join("");
+        /*
+         * Display the latest scan.
+         */
 
-        document.getElementById("networkCards").innerHTML =
-            data.networks.map(n => `
-                <div class="networkCard">
-                    <h3>${esc(n.ssid)}</h3>
-                    <div class="meter"><span style="width:${n.signal}%"></span></div>
-                    <p>Signal: <b>${n.signal}%</b></p>
-                    <p>Channel: <b>${n.channel}</b></p>
-                    <p>Quality: <b>${n.quality}%</b></p>
-                </div>
-            `).join("");
+        displayResults(data);
 
-    } catch (error) {
-        status.textContent = "Scan failed. Make sure Wi-Fi is enabled and Flask is running.";
-        console.error(error);
-    } finally {
-        button.disabled = false;
-        button.textContent = "🔍 Scan Wi-Fi";
+
+        status.textContent =
+            "Scan data received successfully.";
+
+
     }
+
+    catch (error) {
+
+        console.error(error);
+
+
+        status.textContent =
+            "Waiting for the local Wi-Fi scanner.";
+
+
+        /*
+         * Show a useful message.
+         */
+
+        document.getElementById(
+            "recommendedSSID"
+        ).textContent =
+            "No scan available";
+
+
+        document.getElementById(
+            "recommendedDetails"
+        ).textContent =
+            "Start start_wifi_scanner.bat on your Windows PC, then try again.";
+
+
+        document.getElementById(
+            "recommendedQuality"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "networkState"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "networkCount"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "summaryQuality"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "memoryEntries"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "networkTable"
+        ).innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    class="empty-message"
+                >
+                    Start start_wifi_scanner.bat on your Windows PC.
+                </td>
+
+            </tr>
+
+        `;
+
+
+        document.getElementById(
+            "nearbyNetworks"
+        ).innerHTML = `
+
+            <div class="empty-message">
+
+                Waiting for local Wi-Fi scanner...
+
+            </div>
+
+        `;
+
+    }
+
+    finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            "🔍 Scan Wi-Fi";
+
+    }
+
 }
+
+
+/* ===================================================== */
+/* DISPLAY RESULTS */
+/* ===================================================== */
+
+function displayResults(data) {
+
+    lastScanTime =
+        new Date();
+
+
+    const networks =
+        data.networks || [];
+
+
+    const recommended =
+        data.recommended_network;
+
+
+    const learning =
+        data.learning || {};
+
+
+    /* ------------------------------------------------- */
+    /* RECOMMENDED NETWORK */
+    /* ------------------------------------------------- */
+
+    if (recommended) {
+
+        document.getElementById(
+            "recommendedSSID"
+        ).textContent =
+            recommended.ssid || "Unknown";
+
+
+        document.getElementById(
+            "recommendedDetails"
+        ).textContent =
+
+            "Signal " +
+            (recommended.signal ?? "—") +
+            "% • Channel " +
+            (recommended.channel ?? "—") +
+            " • Estimated quality " +
+            (recommended.quality ?? "—") +
+            "%";
+
+
+        document.getElementById(
+            "recommendedQuality"
+        ).textContent =
+
+            (recommended.quality ?? "—") +
+            "%";
+
+
+        document.getElementById(
+            "summaryQuality"
+        ).textContent =
+
+            (recommended.quality ?? "—") +
+            "%";
+
+    }
+
+    else {
+
+        document.getElementById(
+            "recommendedSSID"
+        ).textContent =
+            "No recommendation";
+
+
+        document.getElementById(
+            "recommendedDetails"
+        ).textContent =
+            "No Wi-Fi networks were detected.";
+
+
+        document.getElementById(
+            "recommendedQuality"
+        ).textContent =
+            "—";
+
+
+        document.getElementById(
+            "summaryQuality"
+        ).textContent =
+            "—";
+
+    }
+
+
+    /* ------------------------------------------------- */
+    /* SUMMARY */
+    /* ------------------------------------------------- */
+
+    document.getElementById(
+        "networkState"
+    ).textContent =
+        data.state || "—";
+
+
+    document.getElementById(
+        "networkCount"
+    ).textContent =
+        data.network_count ??
+        networks.length;
+
+
+    document.getElementById(
+        "memoryEntries"
+    ).textContent =
+        learning.memory_entries ??
+        "—";
+
+
+    /* ------------------------------------------------- */
+    /* NETWORK TABLE */
+    /* ------------------------------------------------- */
+
+    const table =
+        document.getElementById(
+            "networkTable"
+        );
+
+
+    if (!networks.length) {
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="8"
+                    class="empty-message"
+                >
+                    No Wi-Fi networks detected.
+                </td>
+
+            </tr>
+
+        `;
+
+    }
+
+    else {
+
+        table.innerHTML = "";
+
+
+        networks.forEach(
+            (network, index) => {
+
+                const row =
+                    document.createElement("tr");
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${index + 1}
+                    </td>
+
+                    <td class="ssid-cell">
+                        ${escapeHTML(
+                            network.ssid ||
+                            "Hidden Network"
+                        )}
+                    </td>
+
+                    <td>
+                        ${network.signal ?? "—"}%
+                    </td>
+
+                    <td>
+                        ${network.channel ?? "—"}
+                    </td>
+
+                    <td>
+                        ${network.channel_load ?? "—"}%
+                    </td>
+
+                    <td>
+                        ${network.quality ?? "—"}%
+                    </td>
+
+                    <td>
+                        ${network.q_value ?? "—"}
+                    </td>
+
+                    <td>
+                        ${network.recommendation_score ?? "—"}
+                    </td>
+
+                `;
+
+
+                table.appendChild(row);
+
+            }
+        );
+
+    }
+
+
+    /* ------------------------------------------------- */
+    /* NEARBY NETWORK CARDS */
+    /* ------------------------------------------------- */
+
+    const nearby =
+        document.getElementById(
+            "nearbyNetworks"
+        );
+
+
+    if (!networks.length) {
+
+        nearby.innerHTML = `
+
+            <div class="empty-message">
+
+                No nearby Wi-Fi networks detected.
+
+            </div>
+
+        `;
+
+    }
+
+    else {
+
+        nearby.innerHTML = "";
+
+
+        networks.forEach(
+            (network) => {
+
+                const card =
+                    document.createElement("div");
+
+
+                card.className =
+                    "network-card";
+
+
+                card.innerHTML = `
+
+                    <h3>
+                        ${escapeHTML(
+                            network.ssid ||
+                            "Hidden Network"
+                        )}
+                    </h3>
+
+                    <p>
+                        Signal:
+                        <strong>
+                            ${network.signal ?? "—"}%
+                        </strong>
+                    </p>
+
+                    <p>
+                        Channel:
+                        <strong>
+                            ${network.channel ?? "—"}
+                        </strong>
+                    </p>
+
+                    <p>
+                        Channel Load:
+                        <strong>
+                            ${network.channel_load ?? "—"}%
+                        </strong>
+                    </p>
+
+                    <p>
+                        Quality:
+                        <strong>
+                            ${network.quality ?? "—"}%
+                        </strong>
+                    </p>
+
+                    <p>
+                        SARSA Q-Value:
+                        <strong>
+                            ${network.q_value ?? "—"}
+                        </strong>
+                    </p>
+
+                `;
+
+
+                nearby.appendChild(card);
+
+            }
+        );
+
+    }
+
+}
+
+
+/* ===================================================== */
+/* AUTO REFRESH */
+/* ===================================================== */
+
+/*
+ * The Windows scanner uploads new data every 10 seconds.
+ *
+ * The website checks Render every 10 seconds as well.
+ *
+ * Therefore the page can update without repeatedly
+ * pressing the Scan Wi-Fi button.
+ */
+
+setInterval(
+    async function () {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/scan",
+                    {
+                        method: "GET",
+                        cache: "no-store"
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (
+                response.ok &&
+                data.success &&
+                data.available !== false
+            ) {
+
+                displayResults(data);
+
+
+                document.getElementById(
+                    "status"
+                ).textContent =
+                    "Live Wi-Fi data updated automatically.";
+
+            }
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Waiting for local Wi-Fi scanner..."
+            );
+
+        }
+
+    },
+    10000
+);
+
+
+/* ===================================================== */
+/* INITIAL CHECK */
+/* ===================================================== */
+
+window.addEventListener(
+    "load",
+    function () {
+
+        scanWiFi();
+
+    }
+);
+
+
+/* ===================================================== */
+/* HTML SAFETY */
+/* ===================================================== */
+
+function escapeHTML(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        String(value);
+
+    return div.innerHTML;
+
+}
+
 </script>
+
 </body>
 </html>
